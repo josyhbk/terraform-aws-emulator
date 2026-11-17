@@ -7,14 +7,9 @@ three emulated accounts plus a DNS account.
 
 What it builds in each environment:
 
-```
-CloudFront (OAC) --> S3 site          app.showcase.example.com (DNS account)
-      |
-      +-- site calls --> API Gateway (HTTP) --> Lambda (private subnets) --> DynamoDB
-                                                         |
-VPC: public / private / data subnets in 3 AZs            +-- gateway endpoint, no NAT
-     NAT single or per AZ, flow logs, locked default SG
-```
+![Architecture of one environment](docs/architecture.drawio.png)
+
+The PNG has the diagram embedded, so it opens for editing in draw.io.
 
 ## Layout
 
