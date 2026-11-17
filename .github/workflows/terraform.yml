@@ -1,0 +1,128 @@
+name: terraform
+
+# Every check runs against a local AWS emulator: no AWS account, no cloud
+# credentials, no secrets in this repo or its settings.
+#
+#   pull request  checks, then a plan per environment
+#   main          checks, then deploy dev -> stage -> prod (prod waits for approval)
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  TF_IN_AUTOMATION: "1"
+  TF_INPUT: "0"
+  AWS_CONFIG_FILE: ${{ github.workspace }}/emulator/aws-config
+
+jobs:
+  checks:
+    name: fmt, validate, lint, scan, module tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: 1.17.2
+          terraform_wrapper: false
+
+      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
+        with:
+          tflint_version: v0.66.0
+
+      - name: fmt
+        run: terraform fmt -check -recursive -diff
+
+      - name: validate
+        run: |
+          for dir in terraform modules/*; do
+            terraform -chdir="$dir" init -backend=false >/dev/null
+            terraform -chdir="$dir" validate
+          done
+
+      - name: tflint
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          tflint --init
+          tflint --recursive --config "$PWD/.tflint.hcl"
+
+      - name: checkov
+        run: >-
+          docker run --rm -v "$PWD:/src:ro" -w /src
+          bridgecrew/checkov:3.4.5@sha256:122602cf32cc72286155d39f1f234b7b594818f7b8d7fdf490701620e521368b
+          -d . --config-file .checkov.yaml --quiet --compact
+
+      - name: module tests
+        run: |
+          for dir in modules/*; do
+            terraform -chdir="$dir" test
+          done
+
+  plan:
+    name: plan (${{ matrix.env }})
+    if: github.event_name == 'pull_request'
+    needs: checks
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [dev, stage, prod]
+    env:
+      ENV: ${{ matrix.env }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: 1.17.2
+          terraform_wrapper: false
+
+      - name: emulator
+        run: scripts/emulator.sh up "$ENV"
+
+      - name: bootstrap state
+        run: scripts/bootstrap.sh "$ENV"
+
+      - name: plan
+        run: |
+          scripts/terraform.sh "$ENV" plan -no-color | tee plan.txt
+          {
+            echo "### $ENV"
+            echo '```'
+            grep -E '^(Plan:|No changes)' plan.txt
+            echo '```'
+          } >>"$GITHUB_STEP_SUMMARY"
+
+  deploy-dev:
+    if: github.event_name != 'pull_request'
+    needs: checks
+    uses: ./.github/workflows/deploy.yml
+    with:
+      env: dev
+
+  deploy-stage:
+    needs: deploy-dev
+    uses: ./.github/workflows/deploy.yml
+    with:
+      env: stage
+
+  deploy-prod:
+    needs: deploy-stage
+    uses: ./.github/workflows/deploy.yml
+    with:
+      env: prod

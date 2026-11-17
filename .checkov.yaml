@@ -1,0 +1,24 @@
+# Checks skipped on purpose. Each one is a decision, not noise.
+framework:
+  - terraform
+skip-path:
+  - .terraform
+skip-check:
+  # Registry modules are pinned by version; commit hashes would hide which release is in use
+  - CKV_TF_1
+  # False positive: the managed SecurityHeadersPolicy is attached through a local
+  - CKV2_AWS_32
+  # False positive: the API security group is attached to the Lambda inside the community module
+  - CKV2_AWS_5
+  # The default *.cloudfront.net certificate only allows TLSv1; custom domains use TLSv1.2_2021
+  - CKV_AWS_174
+  # Static content from one bucket: WAF, origin failover and geo blocking cost more than they
+  # protect here. WAF goes on when there is something dynamic behind CloudFront.
+  - CKV_AWS_68
+  - CKV2_AWS_47
+  - CKV_AWS_310
+  - CKV_AWS_374
+  # Access logs nobody reads are a bill, not a control. The API keeps its access logs.
+  - CKV_AWS_86
+  # The first three zone names sort the same way every run; zone ids differ per account anyway
+  - CKV_AWS_394

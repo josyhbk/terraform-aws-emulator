@@ -1,0 +1,19 @@
+# Credentials come from AWS_PROFILE, set per environment by
+# scripts/terraform.sh. Nothing account-specific is written here.
+provider "aws" {
+  region = var.region
+
+  default_tags {
+    tags = local.tags
+  }
+}
+
+# CloudFront only accepts ACM certificates from us-east-1
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+
+  default_tags {
+    tags = local.tags
+  }
+}

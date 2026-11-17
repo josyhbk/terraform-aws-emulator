@@ -1,0 +1,57 @@
+name: deploy
+
+# One environment, from an empty emulator to a tested deploy:
+# bootstrap the state bucket, apply through apply-dns, smoke test, then
+# check a second plan finds nothing to change.
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: ${{ inputs.env }}
+    runs-on: ubuntu-24.04
+    environment: ${{ inputs.env }}
+    concurrency:
+      group: deploy-${{ inputs.env }}
+    env:
+      ENV: ${{ inputs.env }}
+      TF_IN_AUTOMATION: "1"
+      TF_INPUT: "0"
+      AWS_CONFIG_FILE: ${{ github.workspace }}/emulator/aws-config
+      EMULATOR: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: 1.17.2
+          terraform_wrapper: false
+
+      - name: emulator
+        run: scripts/emulator.sh up "$ENV"
+
+      - name: bootstrap state
+        run: scripts/bootstrap.sh "$ENV"
+
+      - name: apply
+        run: scripts/terraform.sh "$ENV" apply-dns -auto-approve -no-color
+
+      - name: smoke test
+        run: scripts/smoke.sh "$ENV"
+
+      - name: no changes after apply
+        run: scripts/terraform.sh "$ENV" plan -detailed-exitcode -no-color
+
+      - name: emulator logs
+        if: failure()
+        run: docker logs --tail 200 floci

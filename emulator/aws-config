@@ -1,0 +1,34 @@
+# AWS profiles for the local emulator: export AWS_CONFIG_FILE=$PWD/emulator/aws-config
+#
+# Same profile names the scripts use against real AWS (<prefix>-<env>), but
+# nothing here is a real credential. Floci reads a 12-digit access key id as
+# the account id, so each profile is its own isolated account, and DNS lives
+# in a fourth one as it would in an AWS organization.
+#
+# localhost.floci.io and its subdomains resolve to 127.0.0.1. The subdomains
+# matter: S3 Control calls (bucket tagging) put the account id in front of
+# the host.
+
+[profile showcase-dev]
+region                = us-east-1
+endpoint_url          = http://localhost.floci.io:4566
+aws_access_key_id     = 111111111111
+aws_secret_access_key = emulator
+
+[profile showcase-stage]
+region                = us-east-1
+endpoint_url          = http://localhost.floci.io:4566
+aws_access_key_id     = 222222222222
+aws_secret_access_key = emulator
+
+[profile showcase-prod]
+region                = us-east-1
+endpoint_url          = http://localhost.floci.io:4566
+aws_access_key_id     = 333333333333
+aws_secret_access_key = emulator
+
+[profile showcase-dns]
+region                = us-east-1
+endpoint_url          = http://localhost.floci.io:4566
+aws_access_key_id     = 444444444444
+aws_secret_access_key = emulator

@@ -1,0 +1,15 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+.terraform.tfstate.lock.info
+
+# Lambda packages built by the lambda module
+builds/
+
+# Written by scripts/bootstrap.sh, they carry account ids
+terraform/backend.*.hcl
+
+# Lock files are committed for the root module only
+modules/**/.terraform.lock.hcl

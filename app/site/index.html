@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Items</title>
+  <script src="config.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 3rem auto; padding: 0 1rem; }
+    form { display: flex; gap: .5rem; }
+    input { flex: 1; padding: .4rem; }
+  </style>
+</head>
+<body>
+  <h1>Items</h1>
+  <form id="add">
+    <input id="name" placeholder="New item" required maxlength="200">
+    <button>Add</button>
+  </form>
+  <ul id="items"></ul>
+  <script>
+    const list = document.getElementById("items");
+    async function load() {
+      const items = await (await fetch(API_URL + "/items")).json();
+      list.replaceChildren(...items.map(i => Object.assign(document.createElement("li"), { textContent: i.name })));
+    }
+    document.getElementById("add").addEventListener("submit", async e => {
+      e.preventDefault();
+      const name = document.getElementById("name");
+      await fetch(API_URL + "/items", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: name.value }),
+      });
+      name.value = "";
+      load();
+    });
+    load();
+  </script>
+</body>
+</html>
