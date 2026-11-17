@@ -9,7 +9,9 @@ What it builds in each environment:
 
 ![Architecture of one environment](docs/architecture.drawio.png)
 
-The PNG has the diagram embedded, so it opens for editing in draw.io.
+Drawn with [drawio-aws-diagram](https://github.com/josyhbk/devops-ai-skills/tree/main/drawio-aws-diagram),
+a Claude Code skill from my [devops-ai-skills](https://github.com/josyhbk/devops-ai-skills)
+repo. The PNG has the diagram embedded, so it opens for editing in draw.io.
 
 ## Layout
 
