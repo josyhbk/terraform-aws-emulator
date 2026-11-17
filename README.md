@@ -133,6 +133,9 @@ traffic.
   action is pinned to a commit SHA and checkout does not persist the token.
 - The API function's data access is `PutItem` and `Scan` on its own table,
   and its security group only allows HTTPS out to the DynamoDB prefix list.
+- The emulator listens on 127.0.0.1 only. It checks no credentials and has
+  the Docker socket mounted to run Lambdas, so anyone who can reach port 4566
+  can start containers on the host. Don't expose it or put it behind a tunnel.
 
 ## The emulator
 
