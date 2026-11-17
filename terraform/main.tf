@@ -141,6 +141,7 @@ module "dns_acm" {
   }
 
   domain_name = var.domain_name
+  zone_name   = var.dns_zone
 }
 
 # CloudFront rejects a certificate that is still PENDING_VALIDATION, and a

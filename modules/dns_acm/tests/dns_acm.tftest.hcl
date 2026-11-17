@@ -6,6 +6,7 @@ mock_provider "aws" {
 
 variables {
   domain_name = "app.example.com"
+  zone_name   = "example.com"
 }
 
 run "dns_validation" {

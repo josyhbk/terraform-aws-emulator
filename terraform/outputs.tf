@@ -18,14 +18,17 @@ output "cdn_hosted_zone_id" {
   value       = module.cdn.hosted_zone_id
 }
 
+# These two come through module.dns_acm so the certificate-only apply in
+# apply-dns fills them in: a targeted apply skips outputs that do not depend
+# on the target.
 output "site_domain" {
   description = "Custom domain, null without DNS."
-  value       = var.enable_dns ? var.domain_name : null
+  value       = try(module.dns_acm[0].domain_name, null)
 }
 
 output "dns_zone" {
   description = "Hosted zone in the DNS account, null without DNS."
-  value       = var.enable_dns ? var.dns_zone : null
+  value       = try(module.dns_acm[0].zone_name, null)
 }
 
 output "certificate_arn" {
