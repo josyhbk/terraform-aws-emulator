@@ -45,12 +45,12 @@ jobs:
       - name: fmt
         run: terraform fmt -check -recursive -diff
 
+      # From the root module, which calls every module with its providers.
+      # dns_acm needs an aws.us_east_1 passed in, so it can't validate alone.
       - name: validate
         run: |
-          for dir in terraform modules/*; do
-            terraform -chdir="$dir" init -backend=false >/dev/null
-            terraform -chdir="$dir" validate
-          done
+          terraform -chdir=terraform init -backend=false >/dev/null
+          terraform -chdir=terraform validate
 
       - name: tflint
         env:
@@ -68,6 +68,7 @@ jobs:
       - name: module tests
         run: |
           for dir in modules/*; do
+            terraform -chdir="$dir" init -backend=false >/dev/null
             terraform -chdir="$dir" test
           done
 
